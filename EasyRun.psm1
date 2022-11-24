@@ -27,7 +27,7 @@ function Get-ScriptPath {
 function Get-ScriptTargets([string]$prefix) {
 	$scripts = @{}
 	foreach ($path in Get-ScriptPath) {
-		foreach ($f in (Get-ChildItem "$path/$prefix*.py", "$path/$prefix*.pl")) {
+		foreach ($f in (Get-ChildItem "$path/$prefix*.py", "$path/$prefix*.pl", "$path/$prefix*.js")) {
 			$scripts[$f.Name] += @($f.FullName)
 		}
 	}
@@ -74,10 +74,15 @@ function Invoke-PScript {
 		return
 	}
 	if ($fs[0] -like '*.py') {
-		python.exe $fs[0] @Args
+		$bin = $env:EasyRunPython ?? 'python.exe'
 	} elseif ($fs -like '*.pl') {
-		perl.exe $fs[0] @Args
+		$bin = $env:EasyRunPerl ?? 'perl.exe'
+	} elseif ($fs -like '*.js') {
+		$bin = $env:EasyRunNode ?? 'node.exe'
 	} else {
 		Write-Error "Dont know how to execute script($script) for extension: $((Get-Item $fs[0]).Extension)"
+		return
 	}
+
+	& $bin $fs[0] @Args
 }
