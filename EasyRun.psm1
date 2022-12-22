@@ -10,13 +10,13 @@ function Get-ScriptPath {
     if ($exculdePattern -notcontains '') {
         $exculdePattern += ''
     }
-	$paths = ($env:Path -split ';').Where({
+	$paths = ($env:Path -split ';' | Sort-Object -Unique).Where({
 			foreach ($p in $exculdePattern) {
 				if ($_ -like $p) {
 					return $false
 				}
 			}
-			return $true
+			Test-Path $_
 		})
 	if ((Get-Location) -notin $paths) {
 		$paths += (Get-Location).Path
