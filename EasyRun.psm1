@@ -63,14 +63,14 @@ function Invoke-PScript {
 					$fakeBoundParameters
 				)
 				Get-ScriptTargets $wordToComplete
-			})] $script
+			})] $_script
 	)
-	$fs = @(Get-ScriptFile $script)
+	$fs = @(Get-ScriptFile $_script)
 	if ($fs.Count -gt 1) {
 		Write-Error "Multi Scriptfile Found: $fs"
 		return
 	} elseif ($fs.Count -lt 1) {
-		Write-Error "No Script File Found: $script"
+		Write-Error "No Script File Found: $_script"
 		return
 	}
 	if ($fs[0] -like '*.py') {
@@ -80,7 +80,7 @@ function Invoke-PScript {
 	} elseif ($fs -like '*.js') {
 		$bin = $env:EasyRunNode ?? 'node.exe'
 	} else {
-		Write-Error "Dont know how to execute script($script) for extension: $((Get-Item $fs[0]).Extension)"
+		Write-Error "Dont know how to execute script($_script) for extension: $((Get-Item $fs[0]).Extension)"
 		return
 	}
 
