@@ -1,25 +1,20 @@
 function Get-ScriptPath {
-    if($env:EasyRunExcludePath) {
-        $exculdePattern = @($env:EasyRunExcludePath -split ';')
-    } else {
-        $exculdePattern = @(
-            '',
-            'C:\WINDOWS*'
-        )
-    }
-    if ($exculdePattern -notcontains '') {
-        $exculdePattern += ''
-    }
+	if ($env:EasyRunExcludePath) {
+		$exculdePattern = @($env:EasyRunExcludePath -split ';')
+	}
 	$paths = ($env:Path -split ';' | Sort-Object -Unique).Where({
+			if (-not $_ -or -not $_.StartsWith($HOME)) {
+				return $false
+			}
 			foreach ($p in $exculdePattern) {
-				if ($_ -like $p) {
+				if ($_ -and $_ -like $p) {
 					return $false
 				}
 			}
-			Test-Path $_
+			Test-Path $_ -PathType Container
 		})
-	if ((Get-Location) -notin $paths) {
-		$paths += (Get-Location).Path
+	if ($PWD -notin $paths) {
+		$paths += $PWD.Path
 	}
 	return $paths
 }
@@ -63,25 +58,26 @@ function Invoke-PScript {
 					$fakeBoundParameters
 				)
 				Get-ScriptTargets $wordToComplete
-			})] $_script
+			})] $target
 	)
-	$fs = @(Get-ScriptFile $_script)
+	$fs = @(Get-ScriptFile $target)
 	if ($fs.Count -gt 1) {
-		Write-Error "Multi Scriptfile Found: $fs"
-		return
-	} elseif ($fs.Count -lt 1) {
-		Write-Error "No Script File Found: $_script"
-		return
+		throw "Multi Scriptfile Found: $fs"
+	}
+ elseif ($fs.Count -lt 1) {
+		throw "No Script File Found: $target"
 	}
 	if ($fs[0] -like '*.py') {
 		$bin = $env:EasyRunPython ?? 'python.exe'
-	} elseif ($fs -like '*.pl') {
+	}
+ elseif ($fs -like '*.pl') {
 		$bin = $env:EasyRunPerl ?? 'perl.exe'
-	} elseif ($fs -like '*.js') {
+	}
+ elseif ($fs -like '*.js') {
 		$bin = $env:EasyRunNode ?? 'node.exe'
-	} else {
-		Write-Error "Dont know how to execute script($_script) for extension: $((Get-Item $fs[0]).Extension)"
-		return
+	}
+ else {
+		throw "Dont know how to execute script($target) for extension: $((Get-Item $fs[0]).Extension)"
 	}
 
 	& $bin $fs[0] @Args
