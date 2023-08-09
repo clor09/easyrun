@@ -60,6 +60,9 @@ function Invoke-PScript {
 				Get-ScriptTargets $wordToComplete
 			})] $target
 	)
+	if ($target.Length -le 0) {
+		throw "Usage: Invoke-PScript [script]"
+	}
 	$fs = @(Get-ScriptFile $target)
 	if ($fs.Count -gt 1) {
 		throw "Multi Scriptfile Found: $fs"
